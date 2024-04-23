@@ -1,6 +1,6 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-from plot_data import plot_data_from_file
+from plot_data import plot_data_from_db
 from data_processing import manage_process
 from simulate_measurement import simulate_movement
 from forecast import predict_temperature
@@ -18,7 +18,7 @@ def open_control_panel():
     protocol_label.pack()
 
 def open_plot_window():
-    plot_data_from_file('data/data.xlsx')
+    plot_data_from_db('measurement_results.db')
 
 def execute_selected_action(selected_action, target_x=None, target_y=None):
     print(selected_action)
@@ -32,27 +32,6 @@ def execute_selected_action(selected_action, target_x=None, target_y=None):
         predict_temperature()
     elif selected_action == 'display_data':
         display_data()
-    elif selected_action == "simulate_movement_plot":
-
-        if target_x is None or target_y is None:
-            input_window = tk.Toplevel()
-            input_window.title("Введите координаты")
-            
-            target_x_label = tk.Label(input_window, text="Введите координату по X:")
-            target_x_label.pack()
-            target_x_entry = tk.Entry(input_window)
-            target_x_entry.pack()
-
-            target_y_label = tk.Label(input_window, text="Введите координату по Y:")
-            target_y_label.pack()
-            target_y_entry = tk.Entry(input_window)
-            target_y_entry.pack()
-
-            confirm_button = tk.Button(input_window, text="Подтвердить", command=lambda: execute_selected_action("simulate_movement_plot", int(target_x_entry.get()), int(target_y_entry.get())))
-            confirm_button.pack()
-            
-        else:
-            simulate_movement(target_x, target_y)
 
 def main():
     root = tk.Tk()
@@ -73,9 +52,8 @@ def main():
     actions = {
         "manage_process": "Управление процессом",
         "connected_devices": "Панель управления устройств",
-        "plot_data_file": "Построение графика на данных из КИМ",
-        "simulate_movement_plot": "Отследить перемещение наконечника",
-        "predict_temperature": "Прогноз температуры изделия от ИИ Сбера",
+        "plot_data_file": "Построение графика на основе данных из КИМ",
+        "predict_temperature": "Прогноз размеров изделия от ИИ Сбера",
         "display_data": "Открыть БД"
     }
 

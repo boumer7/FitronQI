@@ -10,16 +10,19 @@ def on_mouse_wheel(event, canvas):
 
 def display_data():
 
-    conn = sqlite3.connect('temperature_data.db')
+    conn = sqlite3.connect('measurement_results.db')
     c = conn.cursor()
 
-    c.execute("CREATE TABLE IF NOT EXISTS temperature_data (timestamp TEXT, temperature INTEGER)")
+    c.execute('''CREATE TABLE IF NOT EXISTS measurements
+                 (measurement_id INTEGER PRIMARY KEY,
+                 length REAL,
+                 width REAL)''')
 
-    c.execute("SELECT * FROM temperature_data")
+    c.execute("SELECT * FROM measurements")
     rows = c.fetchall()
 
     root = tk.Tk()
-    root.title("Просмотр текущих значений температуры")
+    root.title("Просмотр текущих значений измерений")
     root.geometry("400x300")  # фиксированный размер окна
 
     canvas = tk.Canvas(root)
@@ -36,8 +39,8 @@ def display_data():
     canvas.create_window((0, 0), window=frame, anchor=tk.NW)
 
     for idx, row in enumerate(rows, start=1):
-        timestamp, temperature = row
-        data_label = tk.Label(frame, text=f"Запись #{idx}: Время: {timestamp}, Температура: {temperature}")
+        id_iz, length, width = row
+        data_label = tk.Label(frame, text=f"Запись {idx}. Длина: {length}, Ширина: {width}")
         data_label.pack(padx=20, pady=5)
 
     conn.close()

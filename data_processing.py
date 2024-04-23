@@ -1,72 +1,89 @@
-import datetime
-import random
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import time
+import numpy as np
 import sqlite3
-from matplotlib.widgets import Button
-
-conn = sqlite3.connect('temperature_data.db')
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS temperature_data 
-             (timestamp TEXT, temperature INTEGER)''')
-
-def save_to_db(timestamp, temperature):
-    c.execute("INSERT INTO temperature_data (timestamp, temperature) VALUES (?, ?)", (timestamp, temperature))
-    conn.commit()
-
-def close_and_save(event):
-    global times, temperatures
-    for i in range(len(times)):
-        save_to_db(times[i], temperatures[i])
-    conn.close()
-    plt.close('all')
-    plt.clf()
 
 def manage_process():
-    global times, temperatures
-    fig, ax = plt.subplots()
-    times = []
-    temperatures = []
 
-    stat_label = ax.text(0.02, 0.85, '', transform=ax.transAxes)
+    num_plastin = 5
+    conn = sqlite3.connect('measurement_results.db')
+    c = conn.cursor()
 
-    button_ax = plt.axes([0.81, 0.9, 0.1, 0.05])
-    close_save_btn = Button(button_ax, 'Закрыть и сохранить')
-    close_save_btn.on_clicked(close_and_save)
+    # Создаем таблицу для хранения результатов измерений
+    c.execute('''CREATE TABLE IF NOT EXISTS measurements
+                 (measurement_id INTEGER PRIMARY KEY,
+                 length REAL,
+                 width REAL)''')
 
-    def update_plot(frame):
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-        if not times:
-            times.append(current_time)
-            temperatures.append(random.randint(10, 50))
+    c.execute('''INSERT INTO measurements (measurement_id, length, width) VALUES (?, ?, ?)''', (0, 40, 18))
+
+    def generate_random_value(base_value):
+        return base_value + np.random.uniform(-0.03*base_value, 0.03*base_value)
+
+    def update(frame, needle, black_x, black_y, measurement_text, L, W, cur_num):
+        x = []
+        y = []
+
+        if frame <= L:
+            x.append(frame)
+            y.append(0)
+        elif frame <= L + W:
+            x.append(L)
+            y.append(frame - L)
+        elif frame <= 2 * L + W:
+            x.append(L - (frame - (L + W)))
+            y.append(W)
         else:
-            new_time = datetime.datetime.now().strftime("%H:%M:%S")
-            if new_time != times[-1]:
-                temperature = temperatures[-1] + random.randint(-5, 5)
-                temperature = max(10, min(temperature, 50))
-                times.append(new_time)
-                temperatures.append(temperature)
+            x.append(0)
+            y.append(2 * (L + W) - frame)
 
-        mean_temp = sum(temperatures) / len(temperatures)
-        max_temp = max(temperatures)
-        min_temp = min(temperatures)
-        median_temp = sorted(temperatures)[len(temperatures)//2] if len(temperatures) % 2 != 0 else (sorted(temperatures)[len(temperatures)//2-1] + sorted(temperatures)[len(temperatures)//2]) / 2
+        needle.set_data(x, y) 
 
-        stat_label.set_text(f'Средняя температура: {mean_temp:.2f}°C\n'
-                            f'Максимальная температура: {max_temp}°C\n'
-                            f'Минимальная температура: {min_temp}°C\n'
-                            f'Медиана температуры: {median_temp}°C')
+        black_x.append(x[-1])
+        black_y.append(y[-1])
 
-        ax.plot(times[-10:], temperatures[-10:], marker='o', color='b')
-        ax.set_xlabel('Время (сек.)')
-        ax.set_ylabel('Температура (°C)')
-        ax.set_title('Симуляция изменения температуры в реальном времени с измерительной машины')
+        needle_line.set_data(black_x, black_y)
 
-    ani = animation.FuncAnimation(fig, update_plot, interval=1000, save_count=len(times))
+        measurement_text.set_text(f'Текущая деталь №{cur_num}\nДлина (L): {L:.1f} мм.\nШирина (W): {W:.1f} мм.')
 
-    plt.show()
 
-    time.sleep(10)  
 
-    conn.close()
+        return needle, needle_line, measurement_text
+
+    fig, ax = plt.subplots()
+
+    def end_measurement(ax):
+        ax.clear()
+        ax.text(0.5, 0.5, f"Измерение партии пластин из {num_plastin} шт. завершено!", ha='center', va='center', fontsize=16, transform=ax.transAxes)
+        plt.show()
+        conn.close()
+
+    for i in range(num_plastin):
+        ax.clear()
+        ax.set_xlim(-2, 50)
+        ax.set_ylim(-2, 20)
+        
+        L = generate_random_value(40)
+        W = generate_random_value(18)
+
+        # Сохраняем результаты измерений в базу данных
+        c.execute("INSERT INTO measurements (length, width) VALUES (?, ?)", ('%.3f'%(L), '%.3f'%(W)))
+        conn.commit()
+
+        black_x = []
+        black_y = []
+
+        needle, = ax.plot([], [], 'ro') 
+        needle_line, = ax.plot([], [], 'k-')
+        measurement_text = ax.text(0.5, 1.05, '', ha='center', va='center', transform=ax.transAxes)
+
+        for frame in np.linspace(0, 2 * (L + W), 100):
+            update(frame, needle, black_x, black_y, measurement_text, L, W, i+1)
+
+            plt.pause(0.024)
+
+        # Генерация новых значений для следующего измерения
+        L = generate_random_value(40)
+        W = generate_random_value(18)
+
+    end_measurement(ax)
