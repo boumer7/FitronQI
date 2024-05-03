@@ -1,6 +1,9 @@
 ![logo](https://github.com/boumer7/FitronQI/assets/33152397/6236e6f0-bea9-4464-b68e-c010a7bb2921)
 
-ПО для повышения качества процессов на основе получаемых параметров напрямую с координатно-измерительной машины или посредством выгрузки из ПО Rational DMIS
+Эксперементальное ПО для повышения качества процессов на основе получаемых параметров напрямую с координатно-измерительной машины или посредством выгрузки из ПО Rational DMIS
+
+![image](https://github.com/boumer7/FitronQI/assets/33152397/93b9a378-ab40-4784-a35f-c8f40feb5d86)
+
 
 Презентация проекта -
 https://docs.google.com/presentation/d/1LI5we2DFwu5mhGIsDe0hPaT0GsXZinnfMi8MMqgY64A/edit?usp=drivesdk
